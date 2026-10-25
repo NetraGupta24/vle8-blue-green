@@ -1,0 +1,64 @@
+
+---
+- name: Configure the VLE-8 Jenkins server
+  hosts: vle8
+  become: true
+
+  tasks:
+    - name: Update apt package cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install Java and required packages
+      ansible.builtin.apt:
+        name:
+          - fontconfig
+          - openjdk-21-jre
+          - docker.io
+          - git
+          - curl
+        state: present
+
+    - name: Create directory for APT signing keys
+      ansible.builtin.file:
+        path: /usr/share/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Download Jenkins LTS signing key
+      ansible.builtin.get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+        dest: /usr/share/keyrings/jenkins-keyring.asc
+        mode: "0644"
+
+    - name: Add Jenkins LTS repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
+        filename: jenkins
+        state: present
+        update_cache: true
+
+    - name: Install Jenkins
+      ansible.builtin.apt:
+        name: jenkins
+        state: present
+        update_cache: true
+
+    - name: Enable and start Docker
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Enable and start Jenkins
+      ansible.builtin.service:
+        name: jenkins
+        state: started
+        enabled: true
+
+    - name: Add Jenkins user to Docker group
+      ansible.builtin.user:
+        name: jenkins
+        groups: docker
+        append: true

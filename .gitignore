@@ -1,0 +1,7 @@
+# Terraform state and downloaded providers must not be pushed to GitHub
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+
+# SSH private keys
+*.pem
